@@ -1,4 +1,4 @@
-Notes on Udemy Course - **Docker and Kubernetes: The Complete Guide**
+Notes on Udemy Course: [Docker and Kubernetes: The Complete Guide](https://www.udemy.com/course/docker-and-kubernetes-the-complete-guide)
 
 
 - Why use Docker?
@@ -159,3 +159,27 @@ Notes:
 
 - Be aware that currently changes in the app are not automatically copied over to the container FS. We would need to rebuild the image. There is extra configuration needed to manage hot reloading.
 
+- Example: Ran a node app in one container and a redis server in another container. If we just run both in separate shells, they are not automatically going to talk to one another. We need to create some networking infrastructure between them. There are two options: Docker CLI network features or **Docker Compose**. We create a separate file `docker-compose.yml` to house commands we would normally write in the shell to the Docker CLI. Now the docker-compose CLI will parse our file and create the separate containers with the configurations we specified.
+
+![](images/9.png)
+
+```
+version: '3' # version of docker-compose
+services:
+  redis-server:
+    image: 'redis'
+  node-app:
+    build: . # look in the current dir and use the Dockerfile to create this image
+    ports:
+      - "4001:8081" # local machine to container port mapping
+```
+
+Note: Creating the two services in the same docker-compose.yml file automatically creates the containers in the same network, therefore allowing communication between them. To start up we run `docker-compose up`. We don't need to specify the image because it will auto look for the docker-compose.yml file. To rebuild images inside docker-compose file we run `docker-compose up --build`.
+
+- `docker-compose up -d` to launch containers in the background and `docker-compose down` to stop them. `docker-compose ps` to print out the status of the containers built from the docker-compose.yml file.
+
+- **Restart policies** in case our app crashes:
+   - "no": never attempt to restart if container stops or crashes
+   - always: always restart if container stops for any reason
+   - on-failure: only restart if container stops with an error code
+   - unless-stopped: always restart unless we forcibly stop it

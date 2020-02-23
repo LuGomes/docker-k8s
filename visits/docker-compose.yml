@@ -1,0 +1,9 @@
+version: '3' # version of docker-compose
+services:
+  redis-server:
+    image: 'redis'
+  node-app:
+    restart: always
+    build: . # look in the current dir and use the Dockerfile to create this image
+    ports:
+      - "4001:8081" # local machine to container port mapping
