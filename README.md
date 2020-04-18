@@ -228,3 +228,22 @@ FROM nginx
 
 COPY --from=builder /app/build /usr/share/nginx/html
 ```
+
+## Continuous Integration and Deployment with AWS
+
+`Travis CI` watches for anytime we push code to our remote repo. At that time, it pulls the code and does some work, usually testing and/or deployment. 
+
+On web UI `travis-ci.org` we switch on the watch to our repo. We create a `travis.yml` file to tell Travis what to do: tell it we need a copy of Docker running, to build our image using Dockerfile.dev, how to run our test suite and finally how to depliy our code to AWS.
+
+```
+language: generic 
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t lugomes/docker-react -f Dockerfile.dev .
+
+script:
+  - docker run -e CI=true lugomes/docker-react npm run test
+```
