@@ -1,0 +1,20 @@
+version: '3'
+services:
+  react-app:
+    build: 
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - /app/node_modules # do not map from the container to local machine
+      - .:/app # map app folder from within the container to current local folder
+    stdin_open: true
+  tests: # second container to run tests and restart whenever test file code changes
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - /app/node_modules
+      - .:/app
+    command: ["npm", "run", "test"] # overrides default npm run start command in dockerfile

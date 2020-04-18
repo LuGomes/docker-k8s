@@ -195,3 +195,36 @@ Note: **Creating the two services in the same docker-compose.yml file automatica
    - unless-stopped: always restart unless we forcibly stop it
 
 For a web app for example we would use always restart policy since we always want it to be available. But for worker process we could use the on-failure policy since the exit would occur naturally after processing has finished.
+
+## Development Workflow
+
+Development > Testing > Deployment > Repeat
+
+We usually push code to a development branch of sorts (e.g. `feature`) and create a pull request to merge that code into the `master` branch. The `master` branch should contain our clean working copy of our codebase whose changes will be automatically deployed to our hosting provider. When the PR is created, we setup a workflow to push our application to the `Travis CI` service (continuous integration provider that runs our app tests). Then, is tests ran successfully, we can merge our branch into master. Then we push again to `Travis CI` and finally have Travis CI push to `AWS Hosting` to deploy our app.
+
+Where does Docker comes in?
+It is not needed at all, it makes it easier to execute the tasks in the workflow though. 
+
+We created a `Dockerfile.dev` with this custom name. To run that file we run `docker build -f Dockerfile.dev .`. After building we run `docker run -it -p 3000:3000 <container_id>`. To hot reload (incorporate source code changes without need to manually rebuild the image and re-run), we make use of `volumes`. We will no longer copy the FS over to the docker container but we will place references to the local machine instead, sort of like folder mapping. We run `docker run -it -p 3000:3000 -v /app/node_modules -v $(pwd):/app <image_id>`. To run tests, run `docker run -it <image-id> npm run test`.
+
+For the prod environment we need a server to respond to incoming request. We make use of `nginx`, popular web server with little logic that is used to serve simple static content. So we create a separate `Dockerfile` that creates a production version of our web app using nginx to serve our static files created with the build. 
+
+Caveat is that dependencies are only required to build the app, after we have the static files, we no longer need to dedicate all the space for that. We will need to make use of two base images, one for node and other for nginx, i.e. we say that the Dockerfile will have a `multi-step build process`, with two blocks of configs. The `build phase` uses node:alpine inage to build the app and the `run phase` will use nginx as the base image to copy over the build folder and serve it. The second phase does not copy the dependencies over, so we save space!
+
+```
+# Build Phase
+FROM node:alpine as builder
+
+WORKDIR /app
+
+COPY ./package.json .
+RUN npm install
+COPY . .
+
+RUN npm run build
+
+# Run Phase
+FROM nginx
+
+COPY --from=builder /app/build /usr/share/nginx/html
+```
