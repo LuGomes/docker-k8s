@@ -267,3 +267,14 @@ deploy:
 ```
 
 We created a PR and Travis CI klicked in to run the tests and allow merge to master. After we merge, Travis CI runs the tests on master another time and attempts to deploy. 
+
+## Building a Multi-Container Application
+
+Our app architecture:
+![](./images/11.png)
+
+The nginx server will route requests to either our React server (if a page is being requested) or the Express server (if information is being requested or updated). Pstgres is for permanent storage and Redis for temp one, caching.  
+
+![](./images/12.png)
+
+When we set an environment variable in the `docker-compose.yml` file, this variable is set at *run time*, not inside the image, only once the container is created! If you just setup the variable name, with no value, this means the variable is going to be taken from your computer!
