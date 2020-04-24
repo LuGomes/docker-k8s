@@ -418,3 +418,39 @@ spec:
 ```
 
 - Note: We can specify the directory of config files in the `kubectl apply -f <config-dir>` call to apply all of them.
+
+- We used a `secret` to store our postgres database password. We don't want to commit this value. We run an imperative command as opposed to a config file to create a secret. This is because we need to pass in the value! In the prod environment we create it manually. `kubectl create secret generic <secret-name> --from-literal key=value`. To wire up the secret to the deployments:
+```
+env:
+  - name: POSTGRES_PASSWORD
+    valueFrom: 
+      secretKeyRef:
+        name: pgpassword
+        key: POSTGRES_PASSWORD
+```
+- `LoadBalancer` Service: legacy way of getting network traffic into a cluster.
+- `Ingress` Service: exposes a set of services to the outside world. Preferred over LoadBalancer. We use a ngnix ingress implementation (ingress-ngnix project on Github). The setup depends on the environment, we use local and Google Cloud for this. We again have a controller that constantly works to make sure our routing rules are setup. In GC a load balancer is automatically created with the ingress that hands off the traffic to the ingress pod. Read more on ingress-nginx at https://www.joyfulbikeshedding.com/blog/2018-03-26-studying-the-kubernetes-ingress-system.html.
+![](./images/20.png)
+![](./images/21.png)
+```
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-service
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /?(.*)
+            backend:
+              serviceName: client-cluster-ip-service
+              servicePort: 3000
+          - path: /api/?(.*)
+            backend:
+              serviceName: server-cluster-ip-service
+              servicePort: 5000
+```
+- The minikube dashboard: `minikube dashboard` with info on our cluster with all workloads.
