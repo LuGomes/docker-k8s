@@ -454,3 +454,17 @@ spec:
               servicePort: 5000
 ```
 - The minikube dashboard: `minikube dashboard` with info on our cluster with all workloads.
+
+### Kubernetes Production Deployment
+
+On Google Cloud:
+- `Kubernetes Engine` tab: Created cluster with 3 nodes with 3.75GB memory each
+- Setup `travis.yaml` file 
+- Generate service account on GC with Kubernetes Engine Admin role which automatically downloads credentials as a JSON file
+- Created a docker container with Ruby pre-installed since that is required to run Travis CLI - `docker run -it -v $(pwd):/app ruby:2.3 sh`. Then `gem install travis` to install Travis CLI in the container, logged in using Github account. Copied the service account json file into the local file and that gets into the container app folder. Then encrypt the service-account.json file with `travis encrypt-file service-account.json -r LuGomes/multi-k8s`. This creates a `service-account.json.enc` file which should be commited, not the original one which we deleted. We added a git SHA to our image tag to make it unique and the deployment can trigger with the new image in our deploy script. Setup secret for postgres password in k8s cluster using GC shell to issue `kubectl create secret generic pgpassword --from-literal POSTGRES_PASSWORD=<value>`.
+- Helm is a software to administer third party software inside our k8s cluster. We issue commands to Heml Client which relays them to Tiller Server who ultimately makes changes to configs in the cluster. 
+- RBAC (Role Based Access Control) limits who can access and modify objects in our cluster. Enabled by default with GC. Tiller will need to get some permissions set to change our cluster. With Helm v2, we need to create a service account and a ClusterRoleBinding for Tiller. `kubectl create serviceaccount --namespace kube-system tiller` (create a service account named tiller in the kube-system namespace) and `kubectl create clusterrolebinding tiller-cluster-role --clusterrole=cluster-admin --serviceaccount=kube-system:tiller` (create a new clusterrolebinding with the role cluster-admin and assign it to the service account tiller).
+  1. `UserAccount`: person administering our cluster
+  2. `ServiceAccount`: pod administering a cluster
+  3. `ClusterRoleBinding`: authorizes an account do to a certain set of actions across the entire cluster
+  4. `RoleBinding`: authorizes an account do to a certain set of actions in a single namespace
