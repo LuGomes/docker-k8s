@@ -66,14 +66,14 @@ A container emcompasses the running program and all resources dedicated to it. A
 
 #### Manipulating Containers with the Docker Client
 
-- `docker run <image name>` - `docker run hello-world`
-- `docker run <image name> command` - `docker run busybox ls` (overrides the image startup command), ls will list out files in the directory
-- `docker ps` to list all containers currently running in your machine
-- `docker ps --all` will list all containers ever created in your machine
-- `docker run =  docker create + docker start`
-- `docker create hello-world` and `docker start -a container_id` (the start will execute the primary startup command, use flag -a to attach to the container and print out its output, docker run does the log of the output automatically)
-- `docker start -a container_id` can also be used to restart exited containers, but you cannot replace the command used the first time
-- `docker system prune` to delete stopped containers and build cache (images fetched from docker hub)
+- Create and run a container from an image: `docker run <image name>` (e.g. `docker run hello-world`).
+- Create and run a container from an image and override the startup command: `docker run <image name> command` (e.g. `docker run busybox ls`).
+- List all containers running in your machine: `docker ps`.
+- List all containers ever created in your machine: `docker ps --all`.
+- `docker run` =  `docker create` (FS) + `docker start` (startup command).
+- `docker create hello-world` and `docker start -a <container id>` (the start will execute the primary startup command, use flag -a to attach to the container and print out its output, docker run attaches automatically).
+- To restart a stopped container: `docker start -a <container id>`. Caveat: we cannot replace the command used the first time the container ran the other times around.
+- To delete stopped containers and image cache: `docker system prune`.
 
 ```WARNING! This will remove:
   - all stopped containers
@@ -82,12 +82,18 @@ A container emcompasses the running program and all resources dedicated to it. A
   - all dangling build cache
 ```
 
-- `docker logs container_id` to log information emitted from stopped containers, does not run the container!
-- `docker stop container_id` allows some time for shutdown and cleanup but 10s later it issues a kill command (preferable)
-- `docker kill container_id` shuts down the container immediately
-- Example: `docker run redis` to startup a local redis server, then to run the redis-cli and have access to that container running the server (or put in other words run two programs inside the same container), we need to run `docker exec -it container_id redis-cli` (exec to execute a second command inside the same container, `-it` flag to send input text to the running container, -i to attach to STDIN of running program and -t to format output)
-- `docker exec -it container_id sh` to drop into a shell inside the container
-- `docker run -it busybox sh` to run and be dropped into a container shell
+- To get logs ever emitted from a stopped container: `docker logs <container id>`. Note: it does not start the container back up!
+- To stop a container: `docker stop <container id>`. Note: this allows some time for shutdown and cleanup but 10s later it issues a kill command if it has not stopped yet.
+- To kill a container: `docker kill container id`. Note: shuts down the container immediately.
+- To execute an additional command inside a running container: `docker exec -it <container id> command`.
+Example: `docker run redis` to startup a local redis server in one shell, then to run the `redis-cli` and have access to the container running the server, we need to run `docker exec -it <container id> redis-cli` (`exec` to execute another command inside the same container, `-it` flag to send input to the container).
+Side note on IT flag: Every process we create in a Linux machine has three communication channels `STDIN`, `STDOUT` and `STDERR`. The `-it` flag combines: `-i` to attach terminal to `STDIN` channel of the process and `-t` to format the output.
+- To be dropped into a shell inside a running container: `docker exec -it <container id> sh`. Note: `sh` is a **command processor** executed inside the container like zsh, bash...
+- To create, run a container and get dropped into a shell: `docker run -it busybox sh`. The downside is that the default startup command is no longer executed. Frequently we will want to then start up the container, have it execute the startup command and then attach to it using `docker exec -it <container id> sh` command.
+
+Containers are isolated by default, they cannot communicate to each other unless we config them to.
+
+#### Building Custom Images Through Docker Server
 
 - **Dockerfile**: plain text file with configuration to define how our container should behave (programs it contains, what is does at startup). The Docker Client will hand it over to the Docker Server which will convert it to a usable image.
 
