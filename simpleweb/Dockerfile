@@ -8,5 +8,5 @@ COPY ./package.json ./
 RUN npm install
 COPY ./ ./
 
-# Default command
+# Default startup command
 CMD ["npm", "start"]

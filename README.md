@@ -196,7 +196,7 @@ Then you can run a container out of the aforementioned generated image with `doc
 
 ### Making Real Projects with Docker
 
-Example:
+Example: `simpleweb` project
 Create a simple web application that simply shows number of visits.
 Use node.js as web server and redis as in-memory datastore (in the example it stores number of visits).
 Note: we could run both node app and redis inside the same container but if more containers are created (app scales), the redis instances will diverge in number of visits.
@@ -206,31 +206,32 @@ So to scale up the node server alone, we have to run the redis server in a separ
 # Specify a base image
 FROM node:alpine
 
-WORKDIR /app
+WORKDIR /usr/app
 
-# Install some dependencies
+# Install some depenendencies
 COPY ./package.json ./
 RUN npm install
-COPY . .
+COPY ./ ./
 
 # Default command
 CMD ["npm", "start"]
 ```
 Notes:
-- Alpine image has very few programs pre-installed, not npm for instance. Alpine is a term in the Docker world for an image that is small as possible. The base image used here is `node:alpine` (repo:tag-name) to have npm installed.
+- Alpine image has very few programs pre-installed, not `npm` for instance. Alpine is a term in the Docker world for an image that is small as possible. The base image used here is `node:alpine` (repo:tag-name) to have npm installed but still super lightweight.
+
+- `WORKDIR /usr/app` and `COPY ./ ./` to avoid copying local files into the root directory (and potentially overriding default files created from the base image). It will then copy to the `/usr/app` directory. Any following command will be executed relative to this path in the container.
+
 - `COPY ./package.json ./` to copy over the file from your local filesystem into the temporary container filesystem.
 
 ![](images/8.png)
 
-- Container port mapping: we tried to hit port 8080 but the traffic would not be directed to the available container ports. We need to specify an explicit port mapping! To do that, we pose a runtime constraint as `docker run -p 8080:8080 image-id` meaning forward incoming traffic to local machine port 8080 to container port 8080. The ports do not have to be identical!
-
-- `WORKDIR /usr/app` and `COPY ./ ./` to avoid copying local files into the root directory (and potentially overriding default files created from the base image). It will then copy to the `/usr/app` directory. Any following command will be executed relative to this path in the container.
-
 - `COPY ./ ./` below `RUN npm install` and `COPY ./package.json ./` so that dependencies are not installed again with app changes. Only rebuild if package.json changes.
 
-- Be aware that currently changes in the app are not automatically copied over to the container FS. We would need to rebuild the image. There is extra configuration needed to manage hot reloading.
+- **Container port mapping**: we tried to hit port 8080 on our current machine (`localhost`) but the traffic would not be directed to the available container ports. We need to specify an explicit port mapping! To do that, we pose a **runtime constraint** as `docker run -p 8080:8080 <image id>` meaning forward incoming traffic to our local machine network port 8080 to container port 8080. The ports do not have to be identical!
 
-### Docker-compose
+- Be aware that currently changes in the app codebase are not automatically copied over to the container FS. We would need to rebuild the image and re-run the container out of that image. There is extra configuration needed to manage **hot reloading**.
+
+### Docker Compose with Multiple Local Containers
 
 - We run the node app in one container and the redis server in another container (just running `docker run server` will do the trick). If we just run both in separate shells, they are not automatically going to talk to one another. We need to create some networking infrastructure between them! 
 - There are two options: Docker CLI network features (complicated to use) or **Docker Compose**. We create a separate file `docker-compose.yml` to house commands we would normally write in the shell to the Docker CLI. Now the docker-compose CLI will parse our file and create the separate containers with the configurations we specified. Now docker-compose sort of takes over Docker CLI but allows us to issue commands much quicker and create infrastructure to run multiple containers in the background.
