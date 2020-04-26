@@ -196,7 +196,7 @@ Then you can run a container out of the aforementioned generated image with `doc
 
 ### Making Real Projects with Docker
 
-Example: `simpleweb` project
+Example: `simpleweb` web app
 Create a simple web application that simply shows number of visits.
 Use node.js as web server and redis as in-memory datastore (in the example it stores number of visits).
 Note: we could run both node app and redis inside the same container but if more containers are created (app scales), the redis instances will diverge in number of visits.
@@ -233,7 +233,8 @@ Notes:
 
 ### Docker Compose with Multiple Local Containers
 
-- We run the node app in one container and the redis server in another container (just running `docker run server` will do the trick). If we just run both in separate shells, they are not automatically going to talk to one another. We need to create some networking infrastructure between them! 
+Example: `visits` web app that shows number of visits using redis
+- We run the node app in one container and the redis server in another container (just running `docker run redis` will do the trick). If we just run both in separate shells, they are not automatically going to talk to one another. We need to create some networking infrastructure between them! 
 - There are two options: Docker CLI network features (complicated to use) or **Docker Compose**. We create a separate file `docker-compose.yml` to house commands we would normally write in the shell to the Docker CLI. Now the docker-compose CLI will parse our file and create the separate containers with the configurations we specified. Now docker-compose sort of takes over Docker CLI but allows us to issue commands much quicker and create infrastructure to run multiple containers in the background.
 
 ![](images/9.png)
@@ -251,9 +252,13 @@ services: # service is a type of container
       - "4001:8081" # local machine to container port mapping
 ```
 
-Note: **Creating the two services in the same docker-compose.yml file automatically creates the containers in the same network**, therefore allowing communication between them. To start up we run `docker-compose up`. We don't need to specify the image because it will auto look for the docker-compose.yml file. To rebuild images inside docker-compose file we run `docker-compose up --build`.
+- **Creating the two services in the same docker-compose.yml file automatically creates the containers in the same network**, therefore allowing communication between them. 
 
-- `docker-compose up -d` to launch containers in the background and `docker-compose down` to stop them. `docker-compose ps` to print out the status of the containers built from the docker-compose.yml file. You need to be inside the directory where the yml file is located to be able to use `docker-compose ps` as opposed to `docker ps`.
+- To start up the containers: `docker-compose up`. We don't need to specify the image because it will auto look for the docker-compose.yml file. 
+- To rebuild images inside docker-compose file and run all containers: `docker-compose up --build`.
+- To launch containers in the background (detach mode): `docker-compose up -d`.
+- To stop all containers: `docker-compose down`.
+- To print out status of containers: `docker-compose ps`. Note: you need to be inside the directory where the yml file is located to be able to use `docker-compose ps` as opposed to `docker ps`.
 
 - **Restart policies** in case our container crashes:
    - "no": never attempt to restart if container stops or crashes
@@ -261,9 +266,9 @@ Note: **Creating the two services in the same docker-compose.yml file automatica
    - on-failure: only restart if container stops with an error code
    - unless-stopped: always restart unless we forcibly stop it
 
-For a web app for example we would use always restart policy since we always want it to be available. But for worker process we could use the on-failure policy since the exit would occur naturally after processing has finished.
+For a web app for example we would use the `always` restart policy since we always want it to be available. But for worker processes we could use the `on-failure` policy since the exit would occur naturally after processing has finished.
 
-## Development Workflow
+### Creating a Production-Grade Workflow
 
 Development > Testing > Deployment > Repeat
 
