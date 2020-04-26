@@ -468,3 +468,10 @@ On Google Cloud:
   2. `ServiceAccount`: pod administering a cluster
   3. `ClusterRoleBinding`: authorizes an account do to a certain set of actions across the entire cluster
   4. `RoleBinding`: authorizes an account do to a certain set of actions in a single namespace
+
+### HTTPS Setup with Kubernetes
+![](./images/22.png)
+![](./images/23.png)
+![](./images/24.png)
+
+Idea: If we own the domain, we have that route handler to reply with the appropriate response. Use Helm to automatically go through that flow. Installed `Cert manager` in the cluster that deals with obtaining the certificate. The secret is stored in the cluster.
