@@ -1,0 +1,37 @@
+apiVersion: skaffold/v1beta2
+kind: Config
+build:
+  local:
+    push: false # don't push to docker hub
+  artifacts:
+    - image: lugomes/multi-client
+      context: client
+      docker:
+        dockerfile: Dockerfile.dev
+      sync:
+        '**/*.js': . # watch for js files change and put updates ones in the container
+        '**/*.css': .
+        '**/*.html': .
+    - image: lugomes/multi-server
+      context: server
+      docker:
+          dockerfile: Dockerfile.dev
+      sync:
+        '**/*.js': .
+    - image: lugomes/multi-worker
+      context: worker
+      docker:
+        dockerfile: Dockerfile.dev
+      sync:
+        '**/*.js': .
+
+deploy:
+  kubectl:
+    manifests:
+      # delete these pods locally when I shutdown skaffold
+      - k8s/client-deployment.yaml
+      - k8s/server-deployment.yaml
+      - k8s/worker-deployment.yaml
+      - k8s/server-cluster-ip-service.yaml
+      - k8s/client-cluster-ip-service.yaml
+

@@ -475,3 +475,9 @@ On Google Cloud:
 ![](./images/24.png)
 
 Idea: If we own the domain, we have that route handler to reply with the appropriate response. Use Helm to automatically go through that flow. Installed `Cert manager` in the cluster that deals with obtaining the certificate. The secret is stored in the cluster.
+
+### Local Dev with Skaffold
+
+![](./images/25.png)
+
+Skaffold is a CLI designed to be used with Kubernetes to facilitate local dev. It watches for local changes and reflect it into the k8s cluster. Two modes: rebuilding the image and update k8s; or injecting updated files into pod and let the app update itself (hot reload). `brew install skaffold` to install it locally and wrote config file for it.
