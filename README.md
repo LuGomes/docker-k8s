@@ -1,22 +1,28 @@
 Notes on Udemy Course: [Docker and Kubernetes: The Complete Guide](https://www.udemy.com/course/docker-and-kubernetes-the-complete-guide)
 
+# Docker
+
+#### Dive Into Docker!
 
 - Why use Docker?
 Because it makes it easy to install and run software without worrying about setup and dependencies.
+![](./images/26.png)
+Example: Running `redis` with Docker: `docker run -it redis`.
 
 - What is Docker?
-Docker is a platform or ecosystem for creating and running containers.
+Docker is a platform or ecosystem around creating and running containers.
 
 The **Docker CLI** reaches out to **Docker Hub** and downloads an **Image** which contains all configs and dependencies required to run a program. The **Container** is an instance of an image or a running program of sorts with its own set of resources like memory, networking tech and hard drive space.
 
 Docker for Mac contains two tools:
 - **Docker Client (CLI)**: where we issue commands to
-- **Docker Server (Daemon**): responsible for creating images, running containers, etc
+- **Docker Server (Docker Daemon**): responsible for creating images, running containers, etc
 
 ![](images/1.png)
 ![](images/2.png)
 
 Example: `docker run hello-world`
+
 Output:
 ```
 Unable to find image 'hello-world:latest' locally
@@ -37,9 +43,10 @@ To generate this message, Docker took the following steps:
  4. The Docker daemon streamed that output to the Docker client, which sent it
     to your terminal.
 ```
+![](images/27.png)
 
 The Docker Server tries to find the requested image in the **image cache**. If it does not find it, it reaches out
-to Docker Hub to download the file and store it in the cache.
+to Docker Hub to download the file and store it in the cache. Then a container is created out of it.
 
 - What is a Container?
 
@@ -48,11 +55,16 @@ from the program as **system calls** to the kernel to, for instance, write a fil
 
 We can segment out the HD to house different resources and their versions and hence run specific programs. This is called **namespacing**: isolating resources per process or group of processes. Then when the request is issued, the kernel figures out which segment of the HD to direct that to. **Control groups** are used to limit the amount of resources per process (memory, CPU, HD I/O, network bandwidth). A container encompasses all those aspects.
 
-Note: Namespacing and control groups are specific to the Linux system, not Windows or MacOS. We then use a Linux virtual machine where containers will be created. The Linux kernel now is the one responsible for isolating hardware resources or limit access to them in your computer.
+Note: Namespacing and control groups are specific to the **Linux** system, not Windows or MacOS. We then use a Linux virtual machine where containers will be created. The Linux kernel now is the one responsible for isolating hardware resources or limit access to them in your computer. Behind the scenes, Docker install comes with a Linux VM and all containes are hosted by the Linux Kernel!
 
+A container emcompasses the running program and all resources dedicated to it. An image is simply put a filesystem snapshot and a startup command.
+
+![](images/28.png)
 ![](images/3.png)
 ![](images/4.png)
 ![](images/5.png)
+
+#### Manipulating Containers with the Docker Client
 
 - `docker run <image name>` - `docker run hello-world`
 - `docker run <image name> command` - `docker run busybox ls` (overrides the image startup command), ls will list out files in the directory
