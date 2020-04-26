@@ -2,7 +2,7 @@ Notes on Udemy Course: [Docker and Kubernetes: The Complete Guide](https://www.u
 
 # Docker
 
-#### Dive Into Docker!
+### Dive Into Docker!
 
 - Why use Docker?
 Because it makes it easy to install and run software without worrying about setup and dependencies.
@@ -64,7 +64,7 @@ A container emcompasses the running program and all resources dedicated to it. A
 ![](images/4.png)
 ![](images/5.png)
 
-#### Manipulating Containers with the Docker Client
+### Manipulating Containers with the Docker Client
 
 - Create and run a container from an image: `docker run <image name>` (e.g. `docker run hello-world`).
 - Create and run a container from an image and override the startup command: `docker run <image name> command` (e.g. `docker run busybox ls`).
@@ -93,7 +93,7 @@ Side note on IT flag: Every process we create in a Linux machine has three commu
 
 Containers are isolated by default, they cannot communicate to each other unless we config them to.
 
-#### Building Custom Images Through Docker Server
+### Building Custom Images Through Docker Server
 
 - **Dockerfile**: plain text file with configuration to define how our container should behave (programs it contains, what is does at startup). The Docker Client will hand it over to the Docker Server which will convert it to a usable image.
 
@@ -114,39 +114,87 @@ CMD ["redis-server"]
 
 - Most important instructions: `FROM` to specify **base image**, `RUN` to execute commands when preparing the image and `CMD` to execute when image is used to startup a new container.
 
-To build the image from the Dockerfile we run `docker build .`. That returns an image id which we use to then run the container with `docker run image_id`. Or we could also run `docker build -t lugomes/redis:latest .` to tag the image and avoid having to paste in the image id in the run command. Then you can run as `docker run lugomes/redis` (latest is used by default).
+To build the image from the Dockerfile we run `docker build .`. The `.` specifies the **build context** to locate the Dockerfile to be used to build the image from. That returns an image id which we then use to run the container with `docker run <image id>`. 
+
+- To build an image and tag it with a custom id: `docker build -t lugomes/redis:latest .` That way we avoid having to paste in the image id in the run command. Then you can run as `docker run lugomes/redis` (latest is used by default).
 
 Specifying the base image is analogous to installing an OS in a computer to sort of create an initial infrastructure to further customize our system.
 
 In detail, the step 2 uses the previously created image (base image) to create a temporary container and execute the run command. The container is then stopped and a temporary image is created with the FS snapshot with redis installed. Then step 3 takes the previous image and creates a new temporary container and sets the the primary command, then creates another image, the final output.
 
+**Takeaway**: For every instruction that we add to the Dockerfile, a temporary container is created based on the image from the previous step, the current command executed that changes its filesystem and finally another image is created from the updated snapshot of the temporary container's FS. The temporary container is shutdown and the image is ready for next instruction, if it exists.
+
+```
+Sending build context to Docker daemon  2.048kB
+Step 1/3 : FROM alpine
+latest: Pulling from library/alpine
+cbdbe7a5bc2a: Pull complete
+Digest: sha256:9a839e63dad54c3a6d1834e29692c8492d93f90c59c978c1ed79109ea4fb9a54
+Status: Downloaded newer image for alpine:latest
+ ---> f70734b6a266
+Step 2/3 : RUN apk add --update redis
+ ---> Running in 62c75c9d8475
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.11/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.11/community/x86_64/APKINDEX.tar.gz
+(1/1) Installing redis (5.0.7-r0)
+Executing redis-5.0.7-r0.pre-install
+Executing redis-5.0.7-r0.post-install
+Executing busybox-1.31.1-r9.trigger
+OK: 7 MiB in 15 packages
+Removing intermediate container 62c75c9d8475
+ ---> 9f0126c9e79c
+Step 3/3 : CMD ["redis-server"]
+ ---> Running in 1710c8c1cf02
+Removing intermediate container 1710c8c1cf02
+ ---> d27851b95ddf
+Successfully built d27851b95ddf
+```
+
 ![](images/7.png)
 
-If we run a second time, Docker uses the build cache which adds performance. If a new command is added, a temporary container is created for that step and new image outputted since this was not cached previously. If the order of operations changes, the cache is not used. So the lesson is: make changes as far down as possible to use cache for as much lines as possible :)
+If we modify the Dockerfile to add in a second dependency and build the image again, Docker uses the build cache to get the image created up to the step that has changed and uses that to create the new final image - this adds a lot of performance. If a new command is added and a new build issued, only the steps from the change line on down are re-executed. The order of operations matter to retrieve the cache!!! So the lesson is: make changes as far down as possible to use cache for as many lines as possible.
+
 ```
 Sending build context to Docker daemon  2.048kB
 Step 1/4 : FROM alpine
- ---> e7d92cdc71fe
-Step 2/4 : RUN apk add --update gcc
+ ---> f70734b6a266
+Step 2/4 : RUN apk add --update redis
  ---> Using cache
- ---> de277e133667
-Step 3/4 : RUN apk add --update redis
- ---> Using cache
- ---> 168eeaace8c7
+ ---> 9f0126c9e79c
+Step 3/4 : RUN apk add --update gcc
+ ---> Running in 60ec233de463
+(1/10) Installing libgcc (9.2.0-r4)
+(2/10) Installing libstdc++ (9.2.0-r4)
+(3/10) Installing binutils (2.33.1-r0)
+(4/10) Installing gmp (6.1.2-r1)
+(5/10) Installing isl (0.18-r0)
+(6/10) Installing libgomp (9.2.0-r4)
+(7/10) Installing libatomic (9.2.0-r4)
+(8/10) Installing mpfr4 (4.0.2-r1)
+(9/10) Installing mpc1 (1.1.0-r1)
+(10/10) Installing gcc (9.2.0-r4)
+Executing busybox-1.31.1-r9.trigger
+OK: 102 MiB in 25 packages
+Removing intermediate container 60ec233de463
+ ---> 3a30bcfe05ed
 Step 4/4 : CMD ["redis-server"]
- ---> Using cache
- ---> fb6ef696a164
-Successfully built fb6ef696a164
+ ---> Running in ec5a73867e4a
+Removing intermediate container ec5a73867e4a
+ ---> a59922404887
+Successfully built a59922404887
 ```
 
-Side-note (not recommended): Manual image creation with docker commit
+Side-note (not recommended): Manual image creation with docker commit (as opposed to using Dockerfile to build it)
+In one terminal:
 `docker run -it alpine sh`
 `apk add --update redis`
 
 In a second terminal:
 `docker ps` to get id of running container
-`docker commit -c 'CMD ["redis-server"]' container_id`
-Then you can run the aforementioned generated image id.
+`docker commit -c 'CMD ["redis-server"]' <container id>`
+Then you can run a container out of the aforementioned generated image with `docker run <image id>`.
+
+### Making Real Projects with Docker
 
 Example:
 Create a simple web application that simply shows number of visits.
