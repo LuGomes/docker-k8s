@@ -12,7 +12,7 @@ RUN npm run build
 # Run Phase
 FROM nginx
 # Elastic Beanstalk exposes this port
-EXPOSE 80  
+EXPOSE 80
 # copy from the builder phase
 COPY --from=0 /app/build /usr/share/nginx/html 
 

@@ -306,7 +306,7 @@ COPY --from=0 /app/build /usr/share/nginx/html
 
 `Travis CI` watches for anytime we push code to our remote repo. At that time, it pulls the code and does some work, usually testing and/or deployment. 
 
-On web UI `travis-ci.org` we switch on the watch to our repo. We create a `travis.yml` file to tell Travis what to do: tell it we need a copy of Docker running, to build our image using Dockerfile.dev, how to run our test suite and finally how to depliy our code to AWS.
+On web UI `travis-ci.org` we switch on the watch to our repo. We create a `travis.yml` file to tell Travis what to do: tell it we need a copy of Docker running, to build our image using Dockerfile.dev, how to run our test suite and finally how to deploy our code to AWS.
 
 ```
 language: generic 
@@ -321,10 +321,11 @@ script:
   - docker run -e CI=true lugomes/docker-react npm run test
 ```
 
-**AWS Elastic Beanstalk** is an easy way to run a single container app in production. Easy steps to create an instance of it in AWS, just include Docker config for the environment. Requests to our web app are then handled by a `load balancer` that routes requests to a virtual machine running Docker. It monitors the amount of traffic coming in to our dockerized app. If a threshold is reached it adds in more machines to handle traffic. So the benefit of this AWS service is scalability of our application!
+**AWS Elastic Beanstalk** is an easy way to run a **single container app in production**. Easy steps to create an instance of it in AWS, just include Docker config for the environment. Requests to our web app are then handled by a `load balancer` that routes requests to a virtual machine running Docker. It monitors the amount of traffic coming into our dockerized app. If a threshold is reached it adds in more machines to handle traffic. So the benefit of this AWS service is scalability of our application!
 
 More config in travis.yml to deploy after tests ran in Travis CI. 
-Generated API keys using AWS IAM service that Travis CI can use to deploy our application. Those are added using Travis UI since we do not want to commit those. 
+Generated API keys using AWS IAM service that Travis CI can use to deploy our application (more specifically created a `User` that has `AWSElasticBeanstalkFullAccess`). Those environment variables are added using Travis UI since we do not want to commit those.
+
 ```
 deploy:
   provider: elasticbeanstalk
@@ -336,12 +337,15 @@ deploy:
   on:
     branch: master
   access_key_id: $AWS_ACCESS_KEY
-  secret_access_key: $AWS_SECRET_KEY
+  secret_access_key: 
+    secure: $AWS_SECRET_KEY
 ```
 
-We created a PR and Travis CI klicked in to run the tests and allow merge to master. After we merge, Travis CI runs the tests on master another time and attempts to deploy. 
+We also need to specify port mapping for ElasticBeanstalk deploy. We add `EXPOSE 80` in the Dockerfile to expose port 80 in the container.
 
-## Building a Multi-Container Application
+Workflow would be as follows: Create a PR to master, Travis CI kicked in to run the tests and allow merge to master. After merge, Travis CI runs the tests on master another time and attempts to deploy.
+
+### Building a Multi-Container Application
 
 Our app architecture:
 ![](./images/11.png)
