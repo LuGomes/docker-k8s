@@ -363,6 +363,43 @@ When we set an environment variable in the `docker-compose.yml` file, this varia
 Why do we have a `nginx` container anyways?
 `nginx` is the server that forwards FE or BE types of requests to the appropriate service. It identifies the type by the path of the incoming request - if route has `/api` its a request to the api express server, else it is a request to the react server. We didn't map each server to different ports because in prod I do not want to append the port to the request, the port can change as well... `default.conf` to specify the routing rules.
 
+### Continuous Integration Workflow for Multiple Images
+
+Context: with the single container setup, ElasticBeanstalk built the image again and deployed it. We don't need to build the image again. This time around, Travis will build the test image, after test that image is thrown away. Then Travis will build the prod images and push them off to Docker Hub. Then EB will pull the images from Docker Hub and deploy, as opposed to building the images. Our images on Docker Hub can also be deployed with another provider... In prod we have 2 nginx servers, one to handle routing and another to serve our react prod files.
+
+![](./images/29.png)
+![](./images/30.png)
+![](./images/31.png)
+
+```
+language: generic
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t lugomes/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true lugomes/react-test npm run test
+
+after_success:
+    # Build prod versions of the images
+    - docker build -t lugomes/multi-client ./client
+    - docker build -t lugomes/multi-nginx ./nginx
+    - docker build -t lugomes/multi-server ./server
+    - docker build -t lugomes/multi-worker ./worker
+    # Log in to Docker CLI using env vars included in Travis CI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # Push images to Docker Hub
+    - docker push lugomes/multi-client
+    - docker push lugomes/multi-nginx
+    - docker push lugomes/multi-server
+    - docker push lugomes/multi-worker
+```
+
+### Multi-Container Deployments to AWS
+
 # Kubernetes
 
 - System to deploy dockerized (containerized) applications.
