@@ -347,14 +347,21 @@ Workflow would be as follows: Create a PR to master, Travis CI kicked in to run 
 
 ### Building a Multi-Container Application
 
-Our app architecture:
+Example: `Fibonacci calculator` app
 ![](./images/11.png)
 
-The nginx server will route requests to either our React server (if a page is being requested) or the Express server (if information is being requested or updated). Pstgres is for permanent storage and Redis for temp one, caching.  
+The nginx server will route requests to either our React server (if a page is being requested) or the Express server (if information is being requested or updated). Postgres is for permanent storage and Redis for temp one, caching.
 
 ![](./images/12.png)
 
+### "Dockerizing" Multiple Services
+
+Dev mode: For each app (client, worker and server) we wrote out Dockerfile.dev. 
+
 When we set an environment variable in the `docker-compose.yml` file, this variable is set at *run time*, not inside the image, only once the container is created! If you just setup the variable name, with no value, this means the variable is going to be taken from your computer!
+
+Why do we have a `nginx` container anyways?
+`nginx` is the server that forwards FE or BE types of requests to the appropriate service. It identifies the type by the path of the incoming request - if route has `/api` its a request to the api express server, else it is a request to the react server. We didn't map each server to different ports because in prod I do not want to append the port to the request, the port can change as well... `default.conf` to specify the routing rules.
 
 # Kubernetes
 
