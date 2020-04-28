@@ -22,3 +22,16 @@ after_success:
     - docker push lugomes/multi-nginx
     - docker push lugomes/multi-server
     - docker push lugomes/multi-worker
+
+deploy:
+    edge: true
+    provider: elasticbeanstalk
+    region: "us-west-2"
+    app: multi-docker
+    env: Multi-Docker-env
+    bucket_name: "elasticbeanstalk-us-east-2-789677611139"
+    bucket_path: multi-docker
+    on:
+        branch: master
+    access_key_id: $AWS_ACCESS_KEY
+    secret_access_key: $AWS_SECRET_KEY

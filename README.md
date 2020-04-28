@@ -400,6 +400,19 @@ after_success:
 
 ### Multi-Container Deployments to AWS
 
+With multiple Dockerfiles there is an extra config step needed to deploy to EB - `Dockerrun.aws.json`, analogous to a `docker-compose.yml` of sorts. `Amazon Elastic Container Service (ECS) is the entity who knows how to run our containers - we set task definitions which are instructions on how to run the containers. 
+We now write `container definitions`! Essential being true means that if the container crashes all other containers will stop. In the example, the `nginx` is essential to access the other containers. At least one container in the list needs to be essential.
+
+Created another application/environment in AWS console.
+
+How do we deal with databases on prod environment?
+We rely on two external services - `AWS Elastic Cache` and `AWS Relational Database Service`. Why don't we run containers for the data services? AWS Elastic Cache sets up redis for us, has logging and maintenance, easy to scale, better security, easier to migrate off of EB. The same points go for AWS Relational Database Service and additionally handles automatic backups and rollbacks.
+
+To connect our services we use a security group (firewall rules) to allow communication between our containers.
+Another user with deploy access to EB was created on AWS. Those variables were added to the Travis dashoboard. Deploy section added to travis.yaml.
+
+![](./images/32.png)
+
 # Kubernetes
 
 - System to deploy dockerized (containerized) applications.
